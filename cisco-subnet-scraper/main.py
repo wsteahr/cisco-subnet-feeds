@@ -27,8 +27,8 @@ from .adapters import ADAPTERS
 
 def main():
     parser = argparse.ArgumentParser(description="Scrape IP subnet lists into CSV + EDL files.")
-    parser.add_argument("adapter", choices=sorted(ADAPTERS.keys()), help="Which source to scrape")
-    parser.add_argument("output_basename", help="e.g. data/section1_call_signaling")
+    parser.add_argument("--adapter", choices=sorted(ADAPTERS.keys()), help="Which source to scrape")
+    parser.add_argument("--output_basename", help="e.g. data/section1_call_signaling")
     parser.add_argument(
         "--target-section",
         default=None,

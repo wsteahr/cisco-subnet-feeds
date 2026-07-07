@@ -1,0 +1,6 @@
+python3 -m cisco-subnet-scraper.main --adapter webex_calling --output_basename subnet_feeds/webex-calling_signal_media_ntp_cscan --target-section "(1) Call Signaling, Media, NTP & CScan"
+python3 -m cisco-subnet-scraper.main --adapter webex_calling --output_basename subnet_feeds/webex-calling_device_configuration_firmware_management --target-section "(2) Device configuration and firmware management (Cisco devices)"
+python3 -m cisco-subnet-scraper.main --adapter webex_calling --output_basename subnet_feeds/webex-calling_webex_app_configuration --target-section "(3) Webex App configuration"
+python3 -m cisco-subnet-scraper.main --adapter webex_fedramp --output_basename subnet_feeds/fedramp_webex-meetings
+python3 -m cisco-subnet-scraper.main --adapter webex_fedramp --output_basename subnet_feeds/fedramp_webex-calling --target-section "IP subnets for Webex Calling services"
+python3 -m cisco-subnet-scraper.main --adapter webex_meetings --output_basename subnet_feeds/webex-meetings_media_services

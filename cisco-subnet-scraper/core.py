@@ -68,6 +68,24 @@ def to_network(cidr: str) -> ipaddress.IPv4Network:
     return ipaddress.ip_network(cidr, strict=False)
 
 
+def try_parse_network(token: str):
+    """Attempt to parse `token` as an IPv4 or IPv6 network/host. Returns
+    an ipaddress network object on success, or None if `token` isn't a
+    valid address/CIDR. Safer and more general than IP_PATTERN for
+    sources that list arbitrary tokens (e.g. bullet lists) — this covers
+    IPv6 and bare hosts too, not just IPv4-with-optional-prefix strings.
+    """
+    token = token.strip()
+    if not token:
+        return None
+    if "/" not in token:
+        token = f"{token}/32" if ":" not in token else f"{token}/128"
+    try:
+        return ipaddress.ip_network(token, strict=False)
+    except ValueError:
+        return None
+
+
 def write_csv(rows: list[dict], path: str) -> None:
     """Write rows (each a dict with at least 'category' and 'ip_subnet'
     keys) to a CSV file at `path`."""
@@ -83,12 +101,16 @@ def write_csv(rows: list[dict], path: str) -> None:
 def write_edl_files(rows: list[dict], base_path: str) -> tuple[str, str]:
     """Write two firewall-ready plain text files from `rows`:
         <base_path>_cidr.txt  - one CIDR per line, e.g. "23.89.0.0/16"
+                                 (IPv4 and IPv6 both included)
         <base_path>_mask.txt  - one "network mask" pair per line,
                                  e.g. "23.89.0.0 255.255.0.0"
+                                 (IPv4 only — dotted-decimal masks don't
+                                 apply to IPv6; those entries are skipped
+                                 here but still appear in the CIDR file)
     Returns (cidr_path, mask_path). Rows with invalid IP data are skipped.
     """
-    cidr_path = f"{base_path}_cidr.txt"
-    mask_path = f"{base_path}_mask.txt"
+    cidr_path = f"{base_path}_cidr_plaintext"
+    mask_path = f"{base_path}_mask_plaintext"
 
     cidr_lines = []
     mask_lines = []
@@ -97,12 +119,12 @@ def write_edl_files(rows: list[dict], base_path: str) -> tuple[str, str]:
         raw = row.get("ip_subnet", "").strip()
         if not raw:
             continue
-        try:
-            network = to_network(raw)
-        except ValueError:
+        network = try_parse_network(raw)
+        if network is None:
             continue
         cidr_lines.append(f"{network.network_address}/{network.prefixlen}")
-        mask_lines.append(f"{network.network_address} {network.netmask}")
+        if network.version == 4:
+            mask_lines.append(f"{network.network_address} {network.netmask}")
 
     with open(cidr_path, "w", encoding="utf-8") as f:
         f.write("\n".join(cidr_lines) + "\n")
